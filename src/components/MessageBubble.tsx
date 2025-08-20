@@ -1,96 +1,111 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Bot, User } from 'lucide-react';
-import type { Message } from './ChatInterface';
+import { Message } from '../types';
+import Avatar from './Avatar';
+import Button from './ui/Button';
 
 interface MessageBubbleProps {
   message: Message;
+  onOptionClick?: (option: string) => void;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onOptionClick }) => {
   const isUser = message.type === 'user';
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-3 duration-500`}>
-      <div className={`flex max-w-[90%] md:max-w-[75%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start space-x-4 space-x-reverse`}>
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6`}
+    >
+      <div className={`flex max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start gap-3`}>
         {/* Avatar */}
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${
-          isUser 
-            ? 'bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500' 
-            : 'bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-400'
-        }`}>
-          {isUser ? (
-            <User className="w-5 h-5 text-white" />
-          ) : (
-            <Bot className="w-5 h-5 text-white" />
-          )}
-        </div>
+        <Avatar 
+          type={message.type} 
+          emoji={message.emoji}
+          size="md"
+        />
 
         {/* Message Content */}
-        <div className={`relative px-5 py-4 rounded-2xl ${
-          isUser 
-            ? 'bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white rounded-br-md shadow-blue-500/20' 
-            : 'bg-gray-800/90 text-gray-100 rounded-bl-md border border-gray-700/60 shadow-purple-500/10'
-        } shadow-xl backdrop-blur-md hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]`}>
-          {isUser ? (
-            <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{message.content}</p>
-          ) : (
-            <div className="prose prose-invert prose-sm max-w-none prose-headings:text-purple-300 prose-strong:text-blue-300 prose-em:text-cyan-300">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  code: ({ node, className, children, ...props }) => {
-                    const match = /language-(\w+)/.exec(className || '');
-                    return match ? (
-                      <pre className="bg-gray-900/90 rounded-lg p-4 overflow-x-auto border border-gray-600/40 shadow-inner">
-                        <code className={className} {...props}>
-                          {children}
-                        </code>
-                      </pre>
-                    ) : (
-                      <code className="bg-gray-700/60 px-2 py-1 rounded text-cyan-300 font-medium" {...props}>
+        <div className="flex flex-col">
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            className={`relative px-6 py-4 rounded-3xl shadow-xl ${
+              isUser 
+                ? 'bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white rounded-br-lg' 
+                : 'bg-gray-800/95 text-gray-100 rounded-bl-lg border border-gray-700/50'
+            } backdrop-blur-md`}
+          >
+            {/* Message tail */}
+            <div className={`absolute top-4 w-4 h-4 ${
+              isUser 
+                ? 'right-0 translate-x-2 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500' 
+                : 'left-0 -translate-x-2 bg-gray-800/95 border-l border-t border-gray-700/50'
+            } rotate-45`}></div>
+
+            {isUser ? (
+              <p className="text-lg font-medium leading-relaxed">{message.content}</p>
+            ) : (
+              <div className="prose prose-invert prose-lg max-w-none">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => <p className="text-lg leading-relaxed mb-3 last:mb-0">{children}</p>,
+                    strong: ({ children }) => <strong className="text-cyan-300 font-bold">{children}</strong>,
+                    em: ({ children }) => <em className="text-purple-300">{children}</em>,
+                    code: ({ children }) => (
+                      <code className="bg-gray-700/60 px-2 py-1 rounded text-cyan-300 font-medium text-base">
                         {children}
                       </code>
-                    );
-                  },
-                  blockquote: ({ children }) => (
-                    <blockquote className="border-l-4 border-purple-400 pl-4 italic text-gray-300 bg-gray-800/40 py-3 rounded-r">
-                      {children}
-                    </blockquote>
-                  ),
-                  h1: ({ children }) => <h1 className="text-xl font-bold text-purple-300 mb-3">{children}</h1>,
-                  h2: ({ children }) => <h2 className="text-lg font-bold text-purple-300 mb-2">{children}</h2>,
-                  h3: ({ children }) => <h3 className="text-base font-bold text-purple-300 mb-2">{children}</h3>,
-                  strong: ({ children }) => <strong className="text-blue-300 font-bold">{children}</strong>,
-                  em: ({ children }) => <em className="text-cyan-300">{children}</em>,
-                  ul: ({ children }) => <ul className="list-disc pl-5 space-y-1">{children}</ul>,
-                  ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1">{children}</ol>,
-                  li: ({ children }) => <li className="text-gray-200">{children}</li>,
-                  p: ({ children }) => <p className="leading-relaxed mb-3 last:mb-0">{children}</p>,
-                }}
-              >
-                {message.content}
-              </ReactMarkdown>
+                    ),
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
+              </div>
+            )}
+
+            {/* Timestamp */}
+            <div className={`text-xs mt-3 opacity-75 ${
+              isUser ? 'text-blue-100' : 'text-gray-400'
+            }`}>
+              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
+          </motion.div>
+
+          {/* Quick Reply Options */}
+          {message.options && message.options.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.3 }}
+              className="flex flex-wrap gap-2 mt-4 ml-2"
+            >
+              {message.options.map((option, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.4 + index * 0.1, duration: 0.2 }}
+                >
+                  <Button
+                    onClick={() => onOptionClick?.(option)}
+                    variant="secondary"
+                    size="sm"
+                    className="text-sm bg-gradient-to-r from-gray-700 to-gray-600 hover:from-purple-600 hover:to-pink-600 border border-gray-600 hover:border-purple-500 transition-all duration-300"
+                  >
+                    {option}
+                  </Button>
+                </motion.div>
+              ))}
+            </motion.div>
           )}
-
-          {/* Timestamp */}
-          <div className={`text-xs mt-3 opacity-75 ${
-            isUser ? 'text-blue-100' : 'text-gray-400'
-          }`}>
-            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </div>
-
-          {/* Message tail */}
-          <div className={`absolute top-4 w-3 h-3 ${
-            isUser 
-              ? 'right-0 translate-x-1 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600' 
-              : 'left-0 -translate-x-1 bg-gray-800/90 border-l border-t border-gray-700/60'
-          } rotate-45`}></div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
